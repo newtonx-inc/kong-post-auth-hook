@@ -5,7 +5,7 @@ source = {
    tag = "v0.0-0"
 }
 description = {
-   summary = "A Kong plugin for performing operations after auth plugins run",
+   summary = "A Kong plugin for performing configurable operations after auth plugins run",
    detailed = [[
        kong-post-auth-hook performs a few customizable operations after auth plugins run, such as adding additional
        useful consumer headers, stripping unwanted auth headers, and performing more fine grained ACL that is not possible
