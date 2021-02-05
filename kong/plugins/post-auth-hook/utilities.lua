@@ -47,4 +47,11 @@ function Utilities:getAuthMechanismFromConsumerTags(tags, key)
     return findMatchingTag(tags, key)
 end
 
+function Utilities:exitForbidden(message)
+    -- Exits with a 403:Forbidden
+    -- :param message: Custom message to display instead of the default
+    -- Returns: nothing
+    kong.response.exit(403, message or 'Access forbidden')
+end
+
 return Utilities
