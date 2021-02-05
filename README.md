@@ -24,7 +24,7 @@ unless the PreAuth hook allows anonymous requests (e.g. a public endpoint).
 # Installation
 
 ```bash
-luarocks install kong-pre-auth-hook
+luarocks install kong-post-auth-hook
 ```
 
 Make sure you set your `KONG_PLUGINS` environment variable such that it reflects this plugin:
