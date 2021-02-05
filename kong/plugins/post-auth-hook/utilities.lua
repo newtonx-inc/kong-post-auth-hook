@@ -1,14 +1,15 @@
 local Utilities = {}
 
 local function splitStr(inputStr, sep)
-        if sep == nil then
-                sep = "%s"
-        end
-        local t={}
-        for str in string.gmatch(inputStr, "([^"..sep.."]+)") do
-                table.insert(t, str)
-        end
-        return t
+    -- Splits a string by a provided separator
+    if sep == nil then
+            sep = "%s"
+    end
+    local t={}
+    for str in string.gmatch(inputStr, "([^"..sep.."]+)") do
+            table.insert(t, str)
+    end
+    return t
 end
 
 local function findMatchingTag(tags, key)

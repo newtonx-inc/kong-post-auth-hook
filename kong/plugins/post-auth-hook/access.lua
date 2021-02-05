@@ -1,4 +1,5 @@
 local Utilities = require('kong.plugins.post-auth-hook.utilities')
+local constants = require("kong.constants")
 
 local Access = {
     config = nil,
@@ -10,8 +11,7 @@ local function successfullyAuthorizedWithPlugins()
     -- Returns: bool
 
     -- If X-Anonymous-Consumer is true AND X-Skip-Kong-Auth is NOT true, it means the request could not be authorized
-    -- TODO - use a constant name for the header
-    local anonymousHeader = kong.request.get_header('X-Anonymous-Consumer')
+    local anonymousHeader = kong.request.get_header(constants.HEADERS.ANONYMOUS)
     if anonymousHeader then
         kong.log.debug("[access.lua] : 'X-Anonymous-Consumer' is present, meaning no previous plugin could successfully auth. NOT allowing to pass.")
         return false
@@ -26,17 +26,20 @@ function Access:checkACL()
     -- Checks to see if the consumer is a member of an allowed group or the list of allowed consumers
     -- Returns: bool (true if a member of any allowed entities, false otherwise) (returns true if no allowed_entities present)
 
+    kong.log.debug("[access.lua] : Checking ACL rules")
+
     -- Get allowed entities
     local allowedEntities = self.config.allowed_entities
-    -- If no allowed entities automatically return true
-    if not allowedEntities then
+    -- If no allowed entities present or empty, automatically return true
+    if (not allowedEntities) or (next(myTable) == nil) then
+        kong.log.debug("[access.lua] : Plugin configuration has no allowed_entities. Skipping ACL checks.")
         return true
     end
 
     -- Registered entities
     -- Get consumer name and group(s) it belongs to
     -- Start by assigning the consumer username as the first element of the entities that a consumer belongs to
-    local registeredEntities = {consumer.username}
+    local registeredEntities = {self.consumer.username}
     if self.config.consumer_groups_tag then
         local groupMemberships = Utilities.getGroupsFromConsumerTags(self.consumer.tags, self.config.consumer_groups_tag)
         for _, gm in ipairs(groupMemberships) do
