@@ -33,7 +33,9 @@ return {
                         strip_headers = {
                             type = "array",
                             required = false,
-                            elements = "string",
+                            elements = {
+                                type = "string",
+                            },
                             default = {
                                 "X-Skip-Kong-Auth",
                             },
@@ -44,7 +46,9 @@ return {
                         allowed_entities = {
                             type = "array",
                             required = false,
-                            elements = "string",
+                            elements = {
+                                type = "string",
+                            },
                             default = {},
                         },
                     },
