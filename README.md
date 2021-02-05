@@ -8,3 +8,6 @@ specified groups (using the `tags` property of a consumer).
 unless the PreAuth hook allows anonymous requests (e.g. a public endpoint). 
 * Adds X-Groups header to specify what groups a user belongs to if applicable
 * Adds X-Auth-Mechanism header to specify what auth mechanism was used
+
+# Notes
+Talk about tag keys
