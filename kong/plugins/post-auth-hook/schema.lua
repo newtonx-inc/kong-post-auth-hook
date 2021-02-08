@@ -7,7 +7,6 @@ return {
             protocols = typedefs.protocols_http
         },
         {
-
             config = {
                 type = 'record',
                 fields = {

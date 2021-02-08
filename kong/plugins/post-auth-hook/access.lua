@@ -63,7 +63,7 @@ function Access:stripUnwantedHeaders()
     end
 end
 
-function Access:start()
+function Access:start(config)
     -- The main function of this plugin. Runs all business logic to determine if the user
     -- Returns: nothing
 
