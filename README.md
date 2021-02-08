@@ -9,13 +9,9 @@ designed to be used in conjunction with the `kong-pre-auth-hook` plugin.
 # What this plugin does
 ## Custom ACL
 * Performs ACL-type authorization by ensuring the consumer belongs to one or more of the 
-specified groups (using the `tags` property of a consumer).
+specified entities.
 * Terminates requests associated with an anonymous consumer with a 403:Forbidden response
 unless the PreAuth hook allows anonymous requests (e.g. a public endpoint).
-
-## Appends utility headers for upstream services 
-* Adds X-Groups header to specify what groups a user belongs to if applicable
-* Adds X-Auth-Mechanism header to specify what auth mechanism was used
 
 ## Strips unnecessary/undesirable headers
 * Strips any intermediary headers that are generated between `kong-pre-auth-hook` and this plugin (`kong-post-auth-hook`)
@@ -47,7 +43,21 @@ None
 | consumer_groups_tag         | "groups"              | No        | The name of the consumer tag that describes what groups a consumer belongs to                 |
 | consumer_auth_mechanism_tag | "auth_mechanism"      | No        | The name of the consumer tag that describes what auth mechanism a consumer is associated with |
 | strip_headers               | {"X-Skip-Kong-Auth",} | No        | The names of headers to remove before the upstream server                                     |
-| allowed_entities            |                       | No        | The group(s) that this consumer must belong to, or consumer ids that are allowed              |
+| allowed_consumer_apps       | {}                    | No        | The consumer app names that are allowed to access the upstream associated with this plugin    |
+| consumer_condition_for_acl  | "^.+$"                | No        | The pattern to look for to decide whether to check for ACL rules or not for this consumer.    |
+
+## Details
+
+### allowed_consumer_apps
+This parameter should be a list of zero or more consumers that are to be authorized. Note, that this list will only be checked
+if the current consumer's username matches the `consumer_condition_for_acl` regex pattern. 
+
+### consumer_condition_for_acl
+This parameter is a regex pattern, that when a match for the current consumer is found, will apply the ACL rules. Defaults 
+to `^.+$`, which covers ALL potential names. You can optionally put a more restrictive pattern in. Example use case: If 
+you don't want to apply the ACL rules to the consumer associated with the [kong-oidc-google-groups](https://github.com/newtonx-inc/kong-oidc-google-groups)
+plugin, set the `consumer_condition_for_acl` to `^.+:oidc-google-groups$`, if your oidc consumers are named like 
+`user@domain.com:oidc-google-groups`.
 
 ## Example configuration
 ### On the protected resource side
@@ -55,13 +65,16 @@ The following can be specified as part of the plugin (e.g. KongPlugin) configura
 upstream service or ingress.
 
 ```yaml
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: my-plugin
+  namespace: my-namespace
+plugin: post-auth-hook
 config:
-    consumer_groups_tag: "groups"
-    consumer_auth_mechanism_tag: "auth_mechanism"
-    allowed_entities:
-      - my_app_name
-      - group1
-      - group2
+    allowed_consumer_apps:
+      - my-app-name
+      - some-other-app
 ```
 
 ### On the consumer side
@@ -70,11 +83,17 @@ be associated with the plugin above. Take special note of the colon (`:`) operat
 recognizes those as delimiters of key-value pairs. 
 
 ```yaml
-username: "my_app_name"
-custom_id: "my_app_name"
-tags:
-    - "auth_mechanism:oauth2"
-    - "groups:group1,group3,group4"
+#...
+apiVersion: configuration.konghq.com/v1
+kind: KongConsumer
+metadata:
+  name: my-app-name
+  namespace: my-namespace
+  annotations:
+    kubernetes.io/ingress.class: kong
+username: my-app-name
+custom_id: my-app-name
+#...
 ```
 
 # Development

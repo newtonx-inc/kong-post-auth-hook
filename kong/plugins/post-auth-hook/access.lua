@@ -23,75 +23,28 @@ local function successfullyAuthorizedWithPlugins()
 end
 
 function Access:checkACL()
-    -- Checks to see if the consumer is a member of an allowed group or the list of allowed consumers
-    -- Returns: bool (true if a member of any allowed entities, false otherwise) (returns true if no allowed_entities present)
+    -- Checks to see if the consumer is a member of the list of allowed consumers
+    -- (IF conditions for the consumer are met. Otherwise, this function returns true so that this step can be skipped).
+    -- Returns: bool (true if a member of any allowed entities, false otherwise) (returns true if no allowed_consumer_apps present)
 
     kong.log.debug("[access.lua] : Checking ACL rules")
 
     -- Get allowed entities
-    local allowedEntities = self.config.allowed_entities
+    local allowedConsumerApps = self.config.allowed_consumer_apps
     -- If no allowed entities present or empty, automatically return true
-    if (not allowedEntities) or (next(allowedEntities) == nil) then
-        kong.log.debug("[access.lua] : Plugin configuration has no allowed_entities. Skipping ACL checks.")
+    if (not allowedConsumerApps) or (next(allowedConsumerApps) == nil) then
+        kong.log.debug("[access.lua] : Plugin configuration has no allowed_consumer_apps. Skipping ACL checks.")
         return true
     end
 
-    -- Registered entities
-    -- Get consumer name and group(s) it belongs to
-    -- Start by assigning the consumer username as the first element of the entities that a consumer belongs to
-    local registeredEntities = {self.consumer.username}
-    if self.config.consumer_groups_tag then
-        local groupMemberships = Utilities.getGroupsFromConsumerTags(self.consumer.tags, self.config.consumer_groups_tag)
-        for _, gm in ipairs(groupMemberships) do
-            table.insert(registeredEntities, gm)
-        end
-    end
-
-    -- Finally, check to see if any of the registered entities match any of the allowed entities.
-    for _, re in ipairs(registeredEntities) do
-        for _, ae in ipairs(allowedEntities) do
-            if ae == re then
-                return true
-            end
-        end
+    -- If consumer meets the condition for being checked for ACL, then check ACL rules
+    if Utilities:shouldCheckConsumerACL(self.consumer, self.config.consumer_condition_for_acl) then
+        return Utilities:isConsumerInAllowedConsumers(self.consumer, allowedConsumerApps)
+    else
+        return true
     end
 
     return false
-end
-
-function Access:appendHeaders()
-    -- Adds headers with useful information about the consumer and auth activity
-    -- Returns: nothing
-
-    kong.log.debug("[access.lua] : Appending desired and utility headers")
-
-    -- Get consumer and tags (If available. If not, skip this function)
-    if not self.consumer then
-        return
-    end
-    local tags = self.consumer.tags or {}
-
-    -- Auth mechanism (if available) ("X-Auth-Mechanism")
-    if self.config.consumer_auth_mechanism_tag then
-        local authMechanism = Utilities:getAuthMechanismFromConsumerTags(tags, self.config.consumer_auth_mechanism_tag)
-        if authMechanism then
-            kong.service.request.set_header('X-Auth-Mechanism', authMechanism)
-        end
-    end
-
-    -- Group membership (if available) ("X-Consumer-Group-Memberships")
-    if self.config.consumer_groups_tag then
-        kong.log.debug('tags in appendHeaders: ')
-        require('pl.pretty').dump(tags)
-        kong.log.debug('key in appendHeaders: ' .. self.config.consumer_groups_tag)
-        local groupMemberships = Utilities:getGroupsFromConsumerTags(tags, self.config.consumer_groups_tag)
-        local groupStr = table.concat(groupMemberships, ',')
-        if groupStr == '' then
-            kong.log.debug("[access.lua] : No groups found. Will not update header: 'X-Consumer-Group-Memberships'")
-        else
-            kong.service.request.set_header('X-Consumer-Group-Memberships', groupStr)
-        end
-    end
 end
 
 function Access:stripUnwantedHeaders()
@@ -143,9 +96,6 @@ function Access:start()
 
     -- Strip unwanted headers
     self:stripUnwantedHeaders()
-
-    -- Append desired headers
-    self:appendHeaders()
 end
 
 return Access
