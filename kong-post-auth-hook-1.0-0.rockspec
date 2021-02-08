@@ -1,8 +1,8 @@
 package = "kong-post-auth-hook"
-version = "0.0-3"
+version = "1.0-0"
 source = {
    url = "git://github.com/newtonx-inc/kong-post-auth-hook",
-   tag = "v0.0-3"
+   tag = "v1.0-0"
 }
 description = {
    summary = "A Kong plugin for performing configurable operations after auth plugins run",
