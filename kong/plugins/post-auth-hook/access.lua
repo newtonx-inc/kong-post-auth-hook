@@ -31,7 +31,7 @@ function Access:checkACL()
     -- Get allowed entities
     local allowedEntities = self.config.allowed_entities
     -- If no allowed entities present or empty, automatically return true
-    if (not allowedEntities) or (next(myTable) == nil) then
+    if (not allowedEntities) or (next(allowedEntities) == nil) then
         kong.log.debug("[access.lua] : Plugin configuration has no allowed_entities. Skipping ACL checks.")
         return true
     end
@@ -69,7 +69,7 @@ function Access:appendHeaders()
     if not self.consumer then
         return
     end
-    local tags = self.consumer.tags
+    local tags = self.consumer.tags or {}
 
     -- Auth mechanism (if available) ("X-Auth-Mechanism")
     if self.config.consumer_auth_mechanism_tag then
@@ -81,7 +81,10 @@ function Access:appendHeaders()
 
     -- Group membership (if available) ("X-Consumer-Group-Memberships")
     if self.config.consumer_groups_tag then
-        local groupMemberships = Utilities.getGroupsFromConsumerTags(tags, self.config.consumer_groups_tag)
+        kong.log.debug('tags in appendHeaders: ')
+        require('pl.pretty').dump(tags)
+        kong.log.debug('key in appendHeaders: ' .. self.config.consumer_groups_tag)
+        local groupMemberships = Utilities:getGroupsFromConsumerTags(tags, self.config.consumer_groups_tag)
         local groupStr = table.concat(groupMemberships, ',')
         if groupStr == '' then
             kong.log.debug("[access.lua] : No groups found. Will not update header: 'X-Consumer-Group-Memberships'")
@@ -99,7 +102,7 @@ function Access:stripUnwantedHeaders()
 
     for _, header in ipairs(self.config.strip_headers) do
         kong.log.debug("[access.lua] : Stripping header with name: " .. header)
-        kong.request.service.request.clear_header(header)
+        kong.service.request.clear_header(header)
     end
 end
 
@@ -131,7 +134,7 @@ function Access:start()
     end
 
     -- If authenticated, check if entity membership is required, and if so, does this consumer belong to any of the allowed entities?
-    if not self.checkACL() then
+    if not self:checkACL() then
         Utilities:exitForbidden('Access forbidden. ACL failure: User is authenticated but does not belong to any of the allowed entities.')
         return
     end
@@ -139,10 +142,10 @@ function Access:start()
     -- At this point, the user has been authenticated AND authorized. Now performing cleanup work.
 
     -- Strip unwanted headers
-    self.stripUnwantedHeaders()
+    self:stripUnwantedHeaders()
 
     -- Append desired headers
-    self.appendHeaders()
+    self:appendHeaders()
 end
 
 return Access
