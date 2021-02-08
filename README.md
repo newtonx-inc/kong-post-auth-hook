@@ -40,8 +40,6 @@ None
 
 | Parameter                   | Default               | Required? | Description                                                                                   |
 |-----------------------------|-----------------------|-----------|-----------------------------------------------------------------------------------------------|
-| consumer_groups_tag         | "groups"              | No        | The name of the consumer tag that describes what groups a consumer belongs to                 |
-| consumer_auth_mechanism_tag | "auth_mechanism"      | No        | The name of the consumer tag that describes what auth mechanism a consumer is associated with |
 | strip_headers               | {"X-Skip-Kong-Auth",} | No        | The names of headers to remove before the upstream server                                     |
 | allowed_consumer_apps       | {}                    | No        | The consumer app names that are allowed to access the upstream associated with this plugin    |
 | consumer_condition_for_acl  | "^.+$"                | No        | The pattern to look for to decide whether to check for ACL rules or not for this consumer.    |

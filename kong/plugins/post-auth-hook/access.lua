@@ -31,6 +31,10 @@ function Access:checkACL()
 
     -- Get allowed entities
     local allowedConsumerApps = self.config.allowed_consumer_apps
+    kong.log.debug("[access.lua] : Allowed consumer apps: ")
+    require('pl.pretty').dump(allowedConsumerApps)
+    kong.log.debug("[access.lua] : Current config: ")
+    require('pl.pretty').dump(self.config)
     -- If no allowed entities present or empty, automatically return true
     if (not allowedConsumerApps) or (next(allowedConsumerApps) == nil) then
         kong.log.debug("[access.lua] : Plugin configuration has no allowed_consumer_apps. Skipping ACL checks.")
@@ -59,20 +63,17 @@ function Access:stripUnwantedHeaders()
     end
 end
 
-function Access:new(config)
-    -- Constructor
-    -- :param config: The plugin config object
-    self.config = config
-    self.consumer = kong.client.get_consumer()
-    return Access
-end
-
 function Access:start()
     -- The main function of this plugin. Runs all business logic to determine if the user
     -- Returns: nothing
 
-    kong.log.debug("[access.lua] : Starting main function. Checking to see if request requires auth and was previously authenticated")
+    -- Init
+    self.config = config
+    self.consumer = kong.client.get_consumer()
 
+    kong.log.debug("[access.lua] : Starting main function. Checking to see if request requires auth and was previously authenticated")
+    kong.log.debug("in Access:start, config value: ")
+    require('pl.pretty').dump(config)
     -- First check if auth is required,
     -- If X-Skip-Kong-Auth is present and has a value of true, auth is not required. Skip
     if kong.request.get_header('X-Skip-Kong-Auth') then

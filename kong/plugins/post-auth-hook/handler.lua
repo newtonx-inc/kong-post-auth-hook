@@ -31,8 +31,7 @@ function PostAuthHookHandler:access(config)
     -- (will log that your plugin is entering this context)
     PostAuthHookHandler.super.access(self)
     -- Implement any custom logic here
-    local access = Access:new(config)
-    access:start()
+    Access:start(config)
 end
 
 
